@@ -1,18 +1,10 @@
 import scrapy
-from scrapy.linkextractors import LinkExtractor
 from suzy.items import BottomsItem, WebExclusivesItem
-from scrapy.spiders import CrawlSpider, Rule
-import itertools
-import json
-import re
-# from datetime import datetime
+
 
 class BottomsSpider(scrapy.Spider):
     name = "bottoms"
-    allowed_domains = ['www.suzyshier.com']
-    rules = [
-        Rule(LinkExtractor(allow='products'), callback='parse_item')
-    ]
+    allowed_domains = ['suzyshier.com']
 
     def start_requests(self):
         urls = [
@@ -23,16 +15,48 @@ class BottomsSpider(scrapy.Spider):
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
 
-        # '//*[@id="product-1"]/div/a'
-        # '//*[@id="product-4"]/div/div[1]/a'
-
     def parse(self, response):
         for url in response.xpath('//a/@href').extract():
-            if 'products' in url:
-                yield scrapy.Request('https://suzyshier.com'+url, callback=self.parse_item)
-
+            if 'products' in url and 'http' in url:
+                yield scrapy.Request(url, callback=self.parse_item)
+            elif 'products' in url:
+                yield scrapy.Request('https://suzyshier.com' + url, callback=self.parse_item)
 
     def parse_item(self, response):
         item = BottomsItem()
-        item['price'] = 0
-        return item
+        item['title'] = response.xpath('//h1[contains(@class,"product__header")]/text()').extract_first()
+        item['price'] = response.xpath('//span[contains(@class,"product__price")]/text()').extract_first().strip()
+        item['color'] = response.xpath('//label[contains(@class,"radio-color")]/@data-value').extract()
+        item['sizes'] = response.xpath('//label[contains(@class,"radio-size")]/@data-value').extract()
+        item['specs'] = response.xpath('//*[@id="toggle-product__specs"]/ul/li/text()').extract()
+        item['description'] = response.xpath('//*[@id="toggle-product__description"]/text()').extract_first().strip()
+        yield item
+
+
+class WebExclusivesSpider(scrapy.Spider):
+    name = "exclusives"
+    allowed_domains = ['suzyshier.com']
+
+    def start_requests(self):
+        urls = [
+            'https://suzyshier.com/collections/sz_trend_online-exclusives?page=1',
+        ]
+
+        for url in urls:
+            yield scrapy.Request(url=url, callback=self.parse)
+
+    def parse(self, response):
+        for url in response.xpath('//a/@href').extract():
+            if 'products' in url and 'http' in url:
+                yield scrapy.Request(url, callback=self.parse_item)
+            elif 'products' in url:
+                yield scrapy.Request('https://suzyshier.com' + url, callback=self.parse_item)
+
+    def parse_item(self, response):
+        item = WebExclusivesItem()
+        item['title'] = response.xpath('//h1[contains(@class,"product__header")]/text()').extract_first()
+        item['price'] = response.xpath('//span[contains(@class,"product__price")]/text()').extract_first().strip()
+        item['discount_price'] = response.xpath('//span[contains(@class,"product__discount")]/text()').extract_first()
+        if item['discount_price']:
+            item['discount_price'] = item['discount_price'].strip()
+        yield item

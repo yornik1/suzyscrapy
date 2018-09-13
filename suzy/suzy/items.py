@@ -16,6 +16,7 @@ class BottomsItem(scrapy.Item):
     specs = scrapy.Field()
     description = scrapy.Field()
 
+
 class WebExclusivesItem(scrapy.Item):
     title = scrapy.Field()
     price = scrapy.Field()
