@@ -8,7 +8,16 @@
 import scrapy
 
 
-class SuzyItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+class BottomsItem(scrapy.Item):
+    title = scrapy.Field()
+    price = scrapy.Field()
+    color = scrapy.Field()
+    sizes = scrapy.Field()
+    specs = scrapy.Field()
+    description = scrapy.Field()
+
+class WebExclusivesItem(scrapy.Item):
+    title = scrapy.Field()
+    price = scrapy.Field()
+    discount_price = scrapy.Field()
+
